@@ -2,7 +2,7 @@
 
 # Component constants
 
-DOMAIN = "yeelight_bt"
+DOMAIN = "mylight_bt"
 PLATFORM = "light"
 CONF_ENTRY_METHOD = "entry_method"
 CONF_ENTRY_SCAN = "Scan"
