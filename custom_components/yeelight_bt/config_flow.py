@@ -13,7 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import CONF_ENTRY_MANUAL, CONF_ENTRY_METHOD, CONF_ENTRY_SCAN, DOMAIN
-from .yeelightbt import BleakError, discover_yeelight_lamps, model_from_name
+from mylight import BleakError, discover_mylight_lamps, model_from_name
 
 _LOGGER = logging.getLogger(__name__)
 
