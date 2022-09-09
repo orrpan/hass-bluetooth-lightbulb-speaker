@@ -36,7 +36,7 @@ from homeassistant.util.color import (
 from .const import DOMAIN
 from bleak import BleakError
 from mylight import Bulb
-# from mylight import LightEffect, SpeakerEffect
+from mylight.const import LightEffect, SpeakerEffect
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -47,22 +47,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DOMAIN): cv.string,
     }
 )
-
-LIGHT_EFFECT_LIST = [
-    "none",
-    "rainbow",
-    "flowing",
-    "heartbeat",
-    "red_pulse",
-    "green_pulse",
-    "blue_pulse",
-    "alarm",
-    "flash",
-    "breathing",
-    "feel_green",
-    "sunset",
-    "music",
-]
 
 SUPPORT_MYLIGHT = SUPPORT_BRIGHTNESS | SUPPORT_EFFECT | SUPPORT_COLOR
 
@@ -98,8 +82,8 @@ class BulbBT(LightEntity):
         self._rgb = [0, 0, 0]
         # self._ct = 0
         self._brightness = 0
-        self._effect_list = LIGHT_EFFECT_LIST
-        self._effect = "none"
+        self._effect = None
+        self._effect_list = [effect.name for effect in LightEffect]
         self._available = True
         self._versions: str | None = None
 
@@ -310,7 +294,7 @@ class BulbBT(LightEntity):
 
         if ATTR_EFFECT in kwargs:
            self._effect = kwargs[ATTR_EFFECT]
-           if self._effect == "none":
+           if self._effect == 0 or self._effect == None:
                 await self._dev.set_white()
            await self._dev.set_effect(self._effect)
 
