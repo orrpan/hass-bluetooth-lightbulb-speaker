@@ -7,15 +7,16 @@ from typing import TYPE_CHECKING, Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components.light import (  # ATTR_EFFECT,; SUPPORT_EFFECT,
+from homeassistant.components.light import (  
+    ATTR_EFFECT,
     ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP,
     ATTR_HS_COLOR,
+    ATTR_WHITE,
+    COLOR_MODE_WHITE,
     ENTITY_ID_FORMAT,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
-    # SUPPORT_COLOR_TEMP,
     SUPPORT_EFFECT,
     LightEntity,
 )
@@ -25,12 +26,6 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.util.color import color_hs_to_RGB, color_RGB_to_hs
-from homeassistant.util.color import (
-    color_temperature_kelvin_to_mired as kelvin_to_mired,
-)
-from homeassistant.util.color import (
-    color_temperature_mired_to_kelvin as mired_to_kelvin,
-)
 
 from .const import DOMAIN
 from bleak import BleakError
@@ -45,22 +40,6 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_NAME, default=DOMAIN): cv.string,
     }
 )
-
-LIGHT_EFFECT_LIST = [
-    "none",
-    "rainbow",
-    "flowing",
-    "heartbeat",
-    "red_pulse",
-    "green_pulse",
-    "blue_pulse",
-    "alarm",
-    "flash",
-    "breathing",
-    "feel_green",
-    "sunset",
-    "music",
-]
 
 SUPPORT_MYLIGHT = SUPPORT_BRIGHTNESS | SUPPORT_EFFECT | SUPPORT_COLOR
 
@@ -92,24 +71,20 @@ class BulbBT(LightEntity):
         self._name = name
         self._mac = ble_device.address
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
+        self._mode = None
         self._is_on = False
-        self._rgb = (0, 0, 0)
-        # self._ct = 0
+        self._rgb = [0, 0, 0]
         self._brightness = 0
-        self._effect_list = LIGHT_EFFECT_LIST
-        self._effect = "none"
+        self._white = True
+        self._white_intensity = None
+        self._effect = None
         self._available = False
+        self._versions: str | None = None
 
-        _LOGGER.info(f"Initializing BlubBT Entity: {self.name}, {self._mac}")
-        self._dev = Blub(ble_device)
-        # self._dev.add_callback_on_state_changed(self._status_cb)
-        # self._prop_min_max = self._dev.get_prop_min_max()
-        # self._min_mireds = kelvin_to_mired(
-        #     self._prop_min_max["temperature"]["max"]
-        # )  # reversed scale
-        # self._max_mireds = kelvin_to_mired(
-        #     self._prop_min_max["temperature"]["min"]
-        # )  # reversed scale
+        _LOGGER.info(f"Initializing BulbBT Entity: {self.name}, {self._mac}")
+        self._dev = Bulb(ble_device)
+        self._dev._connection.add_callback_on_state_changed(self._status_cb)
+        self._effect_list = self._dev.get_light_effects()
 
     async def async_added_to_hass(self) -> None:
         """Run when entity about to be added to hass."""
@@ -130,7 +105,7 @@ class BulbBT(LightEntity):
             await self._dev.disconnect()
         except BleakError:
             _LOGGER.debug(
-                f"Exception disconnecting from {self._dev._mac}", exc_info=True
+                f"Exception disconnecting from {self._dev._connection._mac}", exc_info=True
             )
 
     @property
@@ -142,11 +117,11 @@ class BulbBT(LightEntity):
                 (DOMAIN, self.unique_id)
             },
             "name": self._name,
-            "manufacturer": "Bulb",
-            "model": self._dev.model,
+            "manufacturer": "MyLight",
+            "model": "Speaker Bulb",
         }
-        if self._dev.versions:
-            prop.update({"sw_version": "-".join(map(str, self._dev.versions[1:4]))})
+        if self._versions:
+            prop.update({"sw_version": "-".join(map(str, self._versions[1:4]))})
         return prop
 
     @property
@@ -169,16 +144,6 @@ class BulbBT(LightEntity):
         """Return the name of the light if any."""
         return self._name
 
-    # @property
-    # def min_mireds(self) -> float:
-    #     """Return minimum supported color temperature."""
-    #     return self._min_mireds
-
-    # @property
-    # def max_mireds(self) -> float:
-    #     """Return minimum supported color temperature."""
-    #     return self._max_mireds
-
     @property
     def brightness(self) -> int:
         """Return the brightness of this light between 0..255."""
@@ -188,24 +153,29 @@ class BulbBT(LightEntity):
     def hs_color(self) -> tuple[Any]:
         """
         Return the Hue and saturation color value.
-        Blub has rgb => we calculate hs
+        Bulb has rgb => we calculate hs
         """
         return color_RGB_to_hs(*self._rgb)
 
-    # @property
-    # def color_temp(self) -> int:
-    #     """Return the CT color temperature."""
-    #     return self._ct
+    @property
+    def white(self) -> bool:
+        """Return the white."""
+        return self._white
 
-    # @property
-    # def effect_list(self):
-    #     """Return the list of supported effects."""
-    #     return self._effect_list
+    @property
+    def white_intesity(self) -> int:
+        """Return the white intensity."""
+        return self._white_intensity
 
-    # @property
-    # def effect(self):
-    #     """Return the current effect."""
-    #     return self._effect
+    @property
+    def effect_list(self):
+        """Return the list of supported effects."""
+        return self._effect_list
+
+    @property
+    def effect(self):
+        """Return the current effect."""
+        return self._effect
 
     @property
     def is_on(self) -> bool:
@@ -218,29 +188,30 @@ class BulbBT(LightEntity):
         return SUPPORT_MYLIGHT
 
     def _status_cb(self) -> None:
-        _LOGGER.debug("Got state notification from the Blub")
+        _LOGGER.debug("Got state notification from the Bulb")
         self._available = self._dev.available
         if not self._available:
             self.async_write_ha_state()
             return
 
-        self._brightness = int(round(255.0 * self._dev.brightness / 100))
-        self._is_on = self._dev.is_on
-        if self._dev.mode == self._dev.MODE_WHITE:
-            # temp_in_k = int(self.scale_temp_reversed(self._dev.temperature))
-            # self._ct = int(kelvin_to_mired(temp_in_k))
-            self._rgb = (0, 0, 0)
+        self._brightness = self._dev._light.brightness
+        self._is_on = self._dev._light.on
+        if self._white:
+            self._white_intensity = self._dev._light._white_intensity
+            self._rgb = [0, 0, 0]
         else:
-            # self._ct = 0
-            self._rgb = self._dev.color
+            self._white_intensity = None            
+            self._rgb = self._dev._light._rgb
+
         self.async_write_ha_state()
 
     async def async_update(self) -> None:
         # Note, update should only start fetching,
         # followed by asynchronous updates through notifications.
         try:
-            _LOGGER.debug("Requesting an update of the Blub status")
-            await self._dev.get_state()
+            _LOGGER.debug("Requesting an update of the Bulb status")
+            await self._dev.update()
+            
         except Exception as ex:
             _LOGGER.error(f"Fail requesting the light status. Got exception: {ex}")
             _LOGGER.debug("BulbBT trace:", exc_info=True)
@@ -253,89 +224,62 @@ class BulbBT(LightEntity):
         if ATTR_BRIGHTNESS in kwargs:
             brightness = kwargs[ATTR_BRIGHTNESS]
             if brightness == 0:
-                _LOGGER.debug("Blub brightness to be set to 0... so turning off")
+                _LOGGER.debug("Bulb brightness to be set to 0... so turning off")
                 await self.async_turn_off()
                 return
         else:
             brightness = self._brightness
-        brightness_dev = int(round(brightness * 1.0 / 255 * 100))
+        brightness_dev = brightness # int(round(brightness * 1.0 / 255 * 100))
 
         # ATTR cannot be set while light is off, so turn it on first
         if not self._is_on:
             await self._dev.turn_on()
             if any(
                 keyword in kwargs
-                for keyword in (ATTR_HS_COLOR, ATTR_COLOR_TEMP, ATTR_BRIGHTNESS)
+                for keyword in (ATTR_HS_COLOR, ATTR_WHITE, ATTR_BRIGHTNESS)
             ):
-                await asyncio.sleep(0.5)  # wait for the Blub to turn on
+                await asyncio.sleep(0.5)  # wait for the Bulb to turn on
         self._is_on = True
 
         if ATTR_HS_COLOR in kwargs:
-            rgb: tuple[int, int, int] = color_hs_to_RGB(*kwargs.get(ATTR_HS_COLOR))
-            self._rgb = rgb
+            rgb: tuple[int, int, int, int] = color_hs_to_RGB(*kwargs.get(ATTR_HS_COLOR))
+            self._white = False
+            self._rgb = [rgb[0], rgb[1], rgb[2]]
             _LOGGER.debug(
-                f"Trying to set color RGB:{rgb} with brighntess:{brightness_dev}"
+                f"Trying to set color RGB:{rgb} with brightness:{brightness_dev}"
             )
-            await self._dev.set_color(*rgb, brightness=brightness_dev)
-            # assuming new state before Blub update comes through:
+            await self._dev.set_color_rgb(self._rgb)
+            # assuming new state before Bulb update comes through:
             self._brightness = brightness_dev
             await asyncio.sleep(0.7)  # give time to transition before HA request update
             return
 
-        # if ATTR_COLOR_TEMP in kwargs:
-        #     mireds = kwargs[ATTR_COLOR_TEMP]
-        #     temp_in_k = int(mired_to_kelvin(mireds))
-        #     scaled_temp_in_k = self.scale_temp(temp_in_k)
-        #     _LOGGER.debug(
-        #         f"Trying to set temp:{scaled_temp_in_k} with brightness:{brightness_dev}"
-        #     )
-        #     await self._dev.set_temperature(scaled_temp_in_k, brightness=brightness_dev)
-        #     self._ct = mireds
-        #     # assuming new state before Blub update comes through:
-        #     self._brightness = brightness_dev
-        #     await asyncio.sleep(0.7)  # give time to transition before HA request update
-        #     return
+        if ATTR_WHITE in kwargs:
+            self._white_intensity = kwargs[ATTR_WHITE]
+            self._white = True
+            _LOGGER.debug(
+                f"Trying to white intensity:{self._white}"
+            )
+            await self._dev.set_white_intensity(kwargs[ATTR_WHITE])
+            await asyncio.sleep(0.7)  # give time to transition before HA request update
+            return
 
         if ATTR_BRIGHTNESS in kwargs:
             _LOGGER.debug(f"Trying to set brightness: {brightness_dev}")
             await self._dev.set_brightness(brightness_dev)
-            # assuming new state before Blub update comes through:
+            # assuming new state before Bulb update comes through:
             self._brightness = brightness_dev
             await asyncio.sleep(0.7)  # give time to transition before HA request update
             return
 
-        # if ATTR_EFFECT in kwargs:
-        #    self._effect = kwargs[ATTR_EFFECT]
+        if ATTR_EFFECT in kwargs:
+           self._effect = kwargs[ATTR_EFFECT]
+           if self._effect == 0 or self._effect == None:
+                await self._dev.set_white()
+           await self._dev.set_effect(self._effect)
 
     async def async_turn_off(self, **kwargs: int) -> None:
         """Turn the light off."""
 
         await self._dev.turn_off()
         self._is_on = False
-
-    # def scale_temp(self, temp: int) -> int:
-    #     """Scale the temperature so that the white in HA UI correspond to the
-    #     white on the Blub!"""
-    #     a = self._prop_min_max["temperature"]["min"]
-    #     b = self._prop_min_max["temperature"]["max"]
-    #     mid = 2740  # the temp HA wants to set at when cliking on white in UI
-    #     white = 4080  # the temp that correspond to true white on the Blub
-
-    #     if temp < mid:
-    #         new_temp = (white - a) / (mid - a) * temp + a * (mid - white) / (mid - a)
-    #     else:
-    #         new_temp = (b - white) / (b - mid) * temp + b * (white - mid) / (b - mid)
-    #     return round(new_temp)
-
-    # def scale_temp_reversed(self, temp: int) -> int:
-    #     """Reverse the scale to match HA UI"""
-    #     a = self._prop_min_max["temperature"]["min"]
-    #     b = self._prop_min_max["temperature"]["max"]
-    #     mid = 2740
-    #     white = 4080
-
-    #     if temp < white:
-    #         new_temp = (mid - a) / (white - a) * temp - a * (mid - white) / (white - a)
-    #     else:
-    #         new_temp = (b - mid) / (b - white) * temp - b * (white - mid) / (b - white)
-    #     return round(new_temp)

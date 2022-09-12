@@ -13,7 +13,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import CONF_ENTRY_MANUAL, CONF_ENTRY_METHOD, CONF_ENTRY_SCAN, DOMAIN
-from .yeelightbt import BleakError, discover_yeelight_lamps, model_from_name
+from mylight import BleakError, discover_mylight_lamps, model_from_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
             _LOGGER.debug("Using bleak scanner directly")
         try:
             _LOGGER.debug("Starting a scan for Yeelight Bt devices")
-            ble_devices = await discover_yeelight_lamps(scanner)
+            ble_devices = await discover_mylight_lamps(scanner)
         except BleakError as err:
             _LOGGER.error(f"Bluetooth connection error while trying to scan: {err}")
             errors["base"] = "BleakError"

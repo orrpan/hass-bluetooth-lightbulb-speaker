@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN
-from .yeelightbt import find_device_by_address
+from mylight import find_device_by_address
 
 _LOGGER = logging.getLogger(__name__)
 
