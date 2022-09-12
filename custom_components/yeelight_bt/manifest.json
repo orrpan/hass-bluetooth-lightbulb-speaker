@@ -13,11 +13,7 @@
   "requirements": [
     "bleak>=0.16.0",
     "bleak-retry-connector>=1.5.0",
-<<<<<<< HEAD
     "git+https://github.com/oskarjoelsson/mylight.git@fix_homeassistant#mylight==0.0.6"
-=======
-    "git+https://github.com/oskarjoelsson/mylight.git@fix_homeassistant#mylight==0.0.2"
->>>>>>> 93a21bb0cc90de9a20a6abcdc57e1f6e9eac6f48
   ],
   "version": "0.0.1",
   "iot_class": "local_polling",

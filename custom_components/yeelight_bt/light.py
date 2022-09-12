@@ -12,7 +12,6 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_HS_COLOR,
     ATTR_WHITE,
-    COLOR_MODE_WHITE,
     ENTITY_ID_FORMAT,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
@@ -30,7 +29,6 @@ from homeassistant.util.color import color_hs_to_RGB, color_RGB_to_hs
 from .const import DOMAIN
 from bleak import BleakError
 from mylight import Bulb
-from mylight.const import LightEffect, SpeakerEffect
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -158,11 +156,6 @@ class BulbBT(LightEntity):
         """
         return color_RGB_to_hs(*self._rgb)
 
-    # @property
-    # def color_temp(self) -> int:
-    #     """Return the CT color temperature."""
-    #     return self._ct
-
     @property
     def white_intesity(self) -> int:
         """Return the white intensity."""
@@ -230,7 +223,7 @@ class BulbBT(LightEntity):
                 return
         else:
             brightness = self._brightness
-        brightness_dev = brightness # brightness # int(round(brightness * 1.0 / 255 * 100))
+        brightness_dev = brightness
 
         # ATTR cannot be set while light is off, so turn it on first
         if not self._is_on:
