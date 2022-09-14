@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Any
 
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
-from homeassistant.components.light import (  
+from homeassistant.components.light import (
     ATTR_EFFECT,
     ATTR_BRIGHTNESS,
     ATTR_HS_COLOR,
@@ -24,7 +24,10 @@ from homeassistant.const import CONF_MAC, CONF_NAME, EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util.color import color_hs_to_RGB, color_RGB_to_hs
+from homeassistant.util.color import (
+    color_hs_to_RGB,
+    color_RGB_to_hs
+)
 
 from .const import DOMAIN
 from bleak import BleakError
@@ -74,7 +77,7 @@ class BulbBT(LightEntity):
         self._is_on = False
         self._rgb = [0, 0, 0]
         self._brightness = 0
-        self._white = True
+        self._white = None
         self._white_intensity = None
         self._effect = None
         self._available = False
@@ -120,7 +123,8 @@ class BulbBT(LightEntity):
             "model": "Speaker Bulb",
         }
         if self._versions:
-            prop.update({"sw_version": "-".join(map(str, self._versions[1:4]))})
+            prop.update(
+                {"sw_version": "-".join(map(str, self._versions[1:4]))})
         return prop
 
     @property
@@ -188,14 +192,16 @@ class BulbBT(LightEntity):
             self.async_write_ha_state()
             return
 
-        self._brightness = self._dev._light.brightness
         self._is_on = self._dev._light.on
-        if self._white:
-            self._white_intensity = self._dev._light._white_intensity
-            self._rgb = [0, 0, 0]
-        else:
-            self._white_intensity = None            
-            self._rgb = self._dev._light._rgb
+        if self._is_on:
+            self._brightness = self._dev._light.brightness
+            self._white = self._dev._light.white
+            if self._white:
+                self._white_intensity = self._dev._light._white_intensity
+                self._rgb = [0, 0, 0]
+            else:
+                self._white_intensity = None
+                self._rgb = self._dev._light._rgb
 
         self.async_write_ha_state()
 
@@ -205,9 +211,10 @@ class BulbBT(LightEntity):
         try:
             _LOGGER.debug("Requesting an update of the Bulb status")
             await self._dev.update()
-            
+
         except Exception as ex:
-            _LOGGER.error(f"Fail requesting the light status. Got exception: {ex}")
+            _LOGGER.error(
+                f"Fail requesting the light status. Got exception: {ex}")
             _LOGGER.debug("BulbBT trace:", exc_info=True)
 
     async def async_turn_on(self, **kwargs: int) -> None:
@@ -218,7 +225,8 @@ class BulbBT(LightEntity):
         if ATTR_BRIGHTNESS in kwargs:
             brightness = kwargs[ATTR_BRIGHTNESS]
             if brightness == 0:
-                _LOGGER.debug("Bulb brightness to be set to 0... so turning off")
+                _LOGGER.debug(
+                    "Bulb brightness to be set to 0... so turning off")
                 await self.async_turn_off()
                 return
         else:
@@ -236,26 +244,30 @@ class BulbBT(LightEntity):
         self._is_on = True
 
         if ATTR_HS_COLOR in kwargs:
-            rgb: tuple[int, int, int, int] = color_hs_to_RGB(*kwargs.get(ATTR_HS_COLOR))
-            self._white = False
-            self._rgb = [rgb[0], rgb[1], rgb[2]]
+            rgb: tuple[int, int, int] = color_hs_to_RGB(
+                *kwargs.get(ATTR_HS_COLOR))
             _LOGGER.debug(
-                f"Trying to set color RGB:{rgb} with brightness:{brightness_dev}"
+                f"Trying to set color RGB:{rgb}"
             )
             await self._dev.set_color_rgb(self._rgb)
             # assuming new state before Bulb update comes through:
-            self._brightness = brightness_dev
-            await asyncio.sleep(0.7)  # give time to transition before HA request update
+            self._white = False
+            self._rgb = [*rgb]
+            # give time to transition before HA request update
+            await asyncio.sleep(0.7)
             return
 
         if ATTR_WHITE in kwargs:
             self._white_intensity = kwargs[ATTR_WHITE]
-            self._white = True
             _LOGGER.debug(
                 f"Trying to white intensity:{self._white}"
             )
             await self._dev.set_white_intensity(kwargs[ATTR_WHITE])
-            await asyncio.sleep(0.7)  # give time to transition before HA request update
+            # assuming new state before Bulb update comes through:
+            self._white = True
+            self._rgb = [0, 0, 0]
+            # give time to transition before HA request update
+            await asyncio.sleep(0.7)
             return
 
         if ATTR_BRIGHTNESS in kwargs:
@@ -263,14 +275,20 @@ class BulbBT(LightEntity):
             await self._dev.set_brightness(brightness_dev)
             # assuming new state before Bulb update comes through:
             self._brightness = brightness_dev
-            await asyncio.sleep(0.7)  # give time to transition before HA request update
+            # give time to transition before HA request update
+            await asyncio.sleep(0.7)
             return
 
         if ATTR_EFFECT in kwargs:
-           self._effect = kwargs[ATTR_EFFECT]
-           if self._effect == 0 or self._effect == None:
+            self._effect = kwargs[ATTR_EFFECT]
+            if self._effect == 0 or self._effect == None:
                 await self._dev.set_white()
-           await self._dev.set_effect(self._effect)
+                # give time to transition before HA request update
+                await asyncio.sleep(0.7)
+                return
+            await self._dev.set_effect(self._effect)
+            # give time to transition before HA request update
+            await asyncio.sleep(0.7)
 
     async def async_turn_off(self, **kwargs: int) -> None:
         """Turn the light off."""
