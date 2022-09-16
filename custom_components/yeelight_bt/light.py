@@ -73,7 +73,7 @@ class BulbBT(LightEntity):
         self._name = name
         self._mac = ble_device.address
         self.entity_id = generate_entity_id(ENTITY_ID_FORMAT, self._name, [])
-        self._mode = None
+        # self._model = model_from_name(self._ble_device.name)
         self._is_on = False
         self._rgb = [0, 0, 0]
         self._brightness = 0
@@ -100,7 +100,7 @@ class BulbBT(LightEntity):
         await self._dev.connect()
         _LOGGER.debug("BULB: after first connection ----")
 
-    async def async_will_remove_from_hass(self) -> None:
+    async def async_will_remove_from_hass(self, entry) -> None:
         """Run when entity will be removed from hass."""
         _LOGGER.debug("Running async_will_remove_from_hass")
         try:
@@ -187,7 +187,7 @@ class BulbBT(LightEntity):
 
     def _status_cb(self) -> None:
         _LOGGER.debug("Got state notification from the Bulb")
-        self._available = self._dev.available
+        self._available = self._dev._connection.is_connected
         if not self._available:
             self.async_write_ha_state()
             return
@@ -210,7 +210,7 @@ class BulbBT(LightEntity):
         # followed by asynchronous updates through notifications.
         try:
             _LOGGER.debug("Requesting an update of the Bulb status")
-            await self._dev.update()
+            await self._dev.update_light()
 
         except Exception as ex:
             _LOGGER.error(
@@ -249,7 +249,7 @@ class BulbBT(LightEntity):
             _LOGGER.debug(
                 f"Trying to set color RGB:{rgb}"
             )
-            await self._dev.set_color_rgb(self._rgb)
+            await self._dev.set_color_rgb([*rgb])
             # assuming new state before Bulb update comes through:
             self._white = False
             self._rgb = [*rgb]

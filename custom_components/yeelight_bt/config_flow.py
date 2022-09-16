@@ -6,8 +6,12 @@ from typing import Any
 
 import voluptuous as vol
 from homeassistant import config_entries
-from homeassistant.components import bluetooth
-from homeassistant.components.bluetooth import BluetoothServiceInfoBleak
+from homeassistant.components.bluetooth import (
+    BluetoothServiceInfoBleak,
+    async_get_scanner,
+)
+from homeassistant.components.bluetooth.models import BluetoothScanningMode
+from homeassistant.components.bluetooth.scanner import create_bleak_scanner
 from homeassistant.const import CONF_MAC, CONF_NAME
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
@@ -69,7 +73,7 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
         errors = {}
         if user_input is None:
             return self.async_show_form(step_id="scan")
-        scanner = bluetooth.async_get_scanner(self.hass)
+        scanner = async_get_scanner(self.hass)
         _LOGGER.debug("Preparing for a scan")
         # first we check if scanner from HA bluetooth is enabled
         try:
@@ -77,13 +81,14 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
                 # raises Attribute errors if bluetooth not configured
                 _LOGGER.debug(f"Using HA scanner {scanner}")
         except AttributeError:
-            scanner = None
-            _LOGGER.debug("Using bleak scanner directly")
+            scanner = create_bleak_scanner(BluetoothScanningMode.ACTIVE, None)
+            _LOGGER.debug("Using bleak scanner through HA")
         try:
             _LOGGER.debug("Starting a scan for Yeelight Bt devices")
             ble_devices = await discover_mylight_lamps(scanner)
         except BleakError as err:
-            _LOGGER.error(f"Bluetooth connection error while trying to scan: {err}")
+            _LOGGER.error(
+                f"Bluetooth connection error while trying to scan: {err}")
             errors["base"] = "BleakError"
             return self.async_show_form(step_id="scan", errors=errors)
 
@@ -106,7 +111,8 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
             if self.devices:
                 schema_mac = vol.In(self.devices)
             schema = vol.Schema(
-                {vol.Required(CONF_NAME): str, vol.Required(CONF_MAC): schema_mac}
+                {vol.Required(CONF_NAME): str, vol.Required(
+                    CONF_MAC): schema_mac}
             )
             return self.async_show_form(step_id="device", data_schema=schema)
 
