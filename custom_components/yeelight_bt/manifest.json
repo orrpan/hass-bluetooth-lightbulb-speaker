@@ -13,7 +13,7 @@
   "requirements": [
     "bleak>=0.16.0",
     "bleak-retry-connector>=1.5.0",
-    "git+https://github.com/oskarjoelsson/mylight.git@reconnect#mylight==0.0.13"
+    "git+https://github.com/oskarjoelsson/mylight.git@reconnect#mylight==0.0.31"
   ],
   "version": "0.0.1",
   "iot_class": "local_polling",

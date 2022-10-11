@@ -92,7 +92,7 @@ class BulbBT(LightEntity):
         """Run when entity about to be added to hass."""
         self.async_on_remove(
             self.hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STOP, self.async_will_remove_from_hass
+                EVENT_HOMEASSISTANT_STOP, self.async_will_remove_from_hass()
             )
         )
         _LOGGER.debug("BULB: before first connection ----")
@@ -100,7 +100,7 @@ class BulbBT(LightEntity):
         await self._dev.connect()
         _LOGGER.debug("BULB: after first connection ----")
 
-    async def async_will_remove_from_hass(self, entry) -> None:
+    async def async_will_remove_from_hass(self) -> None:
         """Run when entity will be removed from hass."""
         _LOGGER.debug("Running async_will_remove_from_hass")
         try:
@@ -120,7 +120,7 @@ class BulbBT(LightEntity):
             },
             "name": self._name,
             "manufacturer": "MyLight",
-            "model": "Speaker Bulb",
+            "model": "I'm a festive light bulb speaker",
         }
         if self._versions:
             prop.update(
@@ -187,7 +187,7 @@ class BulbBT(LightEntity):
 
     def _status_cb(self) -> None:
         _LOGGER.debug("Got state notification from the Bulb")
-        self._available = self._dev._connection.is_connected
+        self._available = self._dev._connection._client.is_connected
         if not self._available:
             self.async_write_ha_state()
             return
@@ -240,7 +240,7 @@ class BulbBT(LightEntity):
                 keyword in kwargs
                 for keyword in (ATTR_HS_COLOR, ATTR_WHITE, ATTR_BRIGHTNESS)
             ):
-                await asyncio.sleep(0.5)  # wait for the Bulb to turn on
+                await asyncio.sleep(0.7)  # wait for the Bulb to turn on
         self._is_on = True
 
         if ATTR_HS_COLOR in kwargs:
@@ -255,6 +255,12 @@ class BulbBT(LightEntity):
             self._rgb = [*rgb]
             # give time to transition before HA request update
             await asyncio.sleep(0.7)
+            # _LOGGER.debug(f"Trying to set brightness: {brightness_dev}")
+            # await self._dev.set_brightness(brightness_dev)
+            # # assuming new state before Bulb update comes through:
+            # self._brightness = brightness_dev
+            # # give time to transition before HA request update
+            # await asyncio.sleep(0.7)
             return
 
         if ATTR_WHITE in kwargs:
@@ -268,6 +274,10 @@ class BulbBT(LightEntity):
             self._rgb = [0, 0, 0]
             # give time to transition before HA request update
             await asyncio.sleep(0.7)
+            # _LOGGER.debug(f"Trying to set brightness: {brightness_dev}")
+            # await self._dev.set_brightness(brightness_dev)
+            # # give time to transition before HA request update
+            # await asyncio.sleep(0.7)
             return
 
         if ATTR_BRIGHTNESS in kwargs:
@@ -281,13 +291,14 @@ class BulbBT(LightEntity):
 
         if ATTR_EFFECT in kwargs:
             self._effect = kwargs[ATTR_EFFECT]
-            if self._effect == 0 or self._effect == None:
+            if self._effect == 0 or self._effect is None:
                 await self._dev.set_white()
                 # give time to transition before HA request update
                 await asyncio.sleep(0.7)
                 return
-            await self._dev.set_effect(self._effect)
-            # give time to transition before HA request update
+            else:
+                await self._dev.set_effect(self._effect)
+                # give time to transition before HA request update
             await asyncio.sleep(0.7)
 
     async def async_turn_off(self, **kwargs: int) -> None:

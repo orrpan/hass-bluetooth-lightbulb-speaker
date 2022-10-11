@@ -1,4 +1,4 @@
-"""Config flow for yeelight_bt"""
+"""Config flow for mylight_bt"""
 from __future__ import annotations
 
 import logging
@@ -22,8 +22,8 @@ from mylight import BleakError, discover_mylight_lamps, model_from_name
 _LOGGER = logging.getLogger(__name__)
 
 
-class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
-    """Handle a config flow for yeelight_bt."""
+class MyLight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
+    """Handle a config flow for mylight_bt."""
 
     VERSION = 2
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
@@ -84,7 +84,7 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
             scanner = create_bleak_scanner(BluetoothScanningMode.ACTIVE, None)
             _LOGGER.debug("Using bleak scanner through HA")
         try:
-            _LOGGER.debug("Starting a scan for Yeelight Bt devices")
+            _LOGGER.debug("Starting a scan for MyLight Bt devices")
             ble_devices = await discover_mylight_lamps(scanner)
         except BleakError as err:
             _LOGGER.error(
@@ -118,7 +118,7 @@ class Yeelight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: 
 
         user_input[CONF_MAC] = user_input[CONF_MAC][:17]
         unique_id = dr.format_mac(user_input[CONF_MAC])
-        _LOGGER.debug(f"Yeelight UniqueID: {unique_id}")
+        _LOGGER.debug(f"MyLight UniqueID: {unique_id}")
 
         await self.async_set_unique_id(unique_id)
         self._abort_if_unique_id_configured()
