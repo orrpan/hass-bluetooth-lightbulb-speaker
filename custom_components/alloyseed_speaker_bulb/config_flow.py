@@ -1,4 +1,4 @@
-"""Config flow for mylight_bt"""
+"""Config flow for Alloyseed"""
 from __future__ import annotations
 
 import logging
@@ -17,13 +17,13 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import CONF_ENTRY_MANUAL, CONF_ENTRY_METHOD, CONF_ENTRY_SCAN, DOMAIN
-from mylight import BleakError, discover_mylight_lamps, model_from_name
+from alloyseed import BleakError, discover_mylight_lamps, model_from_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class MyLight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
-    """Handle a config flow for mylight_bt."""
+class AlloyseedConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: ignore
+    """Handle a config flow for Alloyseed."""
 
     VERSION = 2
     CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
@@ -84,7 +84,7 @@ class MyLight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: i
             scanner = create_bleak_scanner(BluetoothScanningMode.ACTIVE, None)
             _LOGGER.debug("Using bleak scanner through HA")
         try:
-            _LOGGER.debug("Starting a scan for MyLight Bt devices")
+            _LOGGER.debug("Starting a scan for Alloyseed Bluetooth Speaker Bulb devices")
             ble_devices = await discover_mylight_lamps(scanner)
         except BleakError as err:
             _LOGGER.error(
@@ -118,7 +118,7 @@ class MyLight_btConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):  # type: i
 
         user_input[CONF_MAC] = user_input[CONF_MAC][:17]
         unique_id = dr.format_mac(user_input[CONF_MAC])
-        _LOGGER.debug(f"MyLight UniqueID: {unique_id}")
+        _LOGGER.debug(f"Alloyseed UniqueID: {unique_id}")
 
         await self.async_set_unique_id(unique_id)
         self._abort_if_unique_id_configured()

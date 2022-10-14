@@ -2,18 +2,18 @@
   "config": {
     "step": {
       "user": {
-        "title": "MyLight Bluetooth",
-        "description": "Control a MyLight bluetooth bedside lamp. Select to scan for devices or enter the mac Address manually.",
+        "title": "Alloyseed Bluetooth",
+        "description": "Control a Alloyseed bluetooth bedside lamp. Select to scan for devices or enter the mac Address manually.",
         "data": {
           "entry_method": "Method to be used:"
         }
       },
       "scan": {
-        "title": "MyLight Bluetooth",
+        "title": "Alloyseed Bluetooth",
         "description": "Make sure the lamp is not connected to other devices or it may not be discoverable (A reset may also help).  Are you ready to start scanning?"
       },
       "device": {
-        "title": "MyLight Bluetooth",
+        "title": "Alloyseed Bluetooth",
         "description": "Enter a name for the device and the MAC address for the lamp. To finish the pairing step, you may need to push the small button on the lamp if it `pulses`.",
         "data": {
           "name": "Lamp Name",

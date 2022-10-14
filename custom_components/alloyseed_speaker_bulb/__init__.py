@@ -1,4 +1,4 @@
-"""Control MyLight bluetooth lamp."""
+"""Control Alloyseed bluetooth speaker bulb lamp."""
 import logging
 
 from homeassistant.components.bluetooth import (
@@ -13,13 +13,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
 from .const import DOMAIN
-from mylight import find_device_by_address
+from alloyseed import find_device_by_address
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up mylight_bt from a config entry."""
+    """Set up Alloyseed from a config entry."""
     _LOGGER.debug(f"integration async setup entry: {entry.as_dict()}")
     hass.data.setdefault(DOMAIN, {})
 
@@ -38,7 +38,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         _LOGGER.debug(f"BLE device using bleak scanner through HA: {ble_device}")
     if not ble_device:
         raise ConfigEntryNotReady(
-            f"Could not find MyLight with address {address}")
+            f"Could not find Alloyseed with address {address}")
 
     hass.data[DOMAIN][entry.entry_id] = ble_device
     hass.async_create_task(

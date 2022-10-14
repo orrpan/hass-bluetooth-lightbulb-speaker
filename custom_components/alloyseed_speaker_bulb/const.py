@@ -2,7 +2,7 @@
 
 # Component constants
 
-DOMAIN = "mylight_bt"
+DOMAIN = "Alloyseed"
 PLATFORM = "light"
 CONF_ENTRY_METHOD = "entry_method"
 CONF_ENTRY_SCAN = "Scan"
