@@ -31,7 +31,7 @@ from homeassistant.util.color import (
 
 from .const import DOMAIN
 from bleak import BleakError
-from alloyseed import Bulb
+from bluetooth_speaker_bulb import Bulb
 
 if TYPE_CHECKING:
     from bleak.backends.device import BLEDevice
@@ -119,7 +119,7 @@ class BulbBT(LightEntity):
                 (DOMAIN, self.unique_id)
             },
             "name": self._name,
-            "manufacturer": "Alloyseed",
+            "manufacturer": "Bluetooth Speaker Bulb",
             "model": "I'm a festive light bulb speaker",
         }
         if self._versions:

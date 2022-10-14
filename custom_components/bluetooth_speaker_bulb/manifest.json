@@ -1,9 +1,9 @@
 {
-  "domain": "Alloyseed",
-  "name": "Alloyseed bluetooth",
+  "domain": "bluetooth_speaker_bulb",
+  "name": "Bluetooth Speaker Bulb",
   "config_flow": true,
-  "documentation": "https://github.com/orrpan/hass_alloyseed_speaker_bulb",
-  "issue_tracker": "https://github.com/orrpan/hass_alloyseed_speaker_bulb/issues",
+  "documentation": "https://github.com/orrpan/hass_bluetooth_speaker_bulb",
+  "issue_tracker": "https://github.com/orrpan/hass_bluetooth_speaker_bulb/issues",
   "codeowners": [
     "@orrpan"
   ],
@@ -13,7 +13,7 @@
   "requirements": [
     "bleak>=0.16.0",
     "bleak-retry-connector>=1.5.0",
-    "git+https://github.com/orrpan/alloyseed_speaker_bulb.git@master#alloyseed==0.0.9"
+    "git+https://github.com/orrpan/bluetooth_speaker_bulb.git@master#bluetooth_speaker_bulb==0.0.9"
   ],
   "version": "0.0.1",
   "iot_class": "local_polling",

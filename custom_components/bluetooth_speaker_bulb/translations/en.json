@@ -2,18 +2,18 @@
   "config": {
     "step": {
       "user": {
-        "title": "Alloyseed Bluetooth",
-        "description": "Control a Alloyseed bluetooth bedside lamp. Select to scan for devices or enter the mac Address manually.",
+        "title": "Bluetooth Speaker Bulb",
+        "description": "Control a Bluetooth Speaker Bulb. Select to scan for devices or enter the mac Address manually.",
         "data": {
           "entry_method": "Method to be used:"
         }
       },
       "scan": {
-        "title": "Alloyseed Bluetooth",
+        "title": "Bluetooth Speaker Bulb",
         "description": "Make sure the lamp is not connected to other devices or it may not be discoverable (A reset may also help).  Are you ready to start scanning?"
       },
       "device": {
-        "title": "Alloyseed Bluetooth",
+        "title": "Bluetooth Speaker Bulb",
         "description": "Enter a name for the device and the MAC address for the lamp. To finish the pairing step, you may need to push the small button on the lamp if it `pulses`.",
         "data": {
           "name": "Lamp Name",
