@@ -17,7 +17,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers import device_registry as dr
 
 from .const import CONF_ENTRY_MANUAL, CONF_ENTRY_METHOD, CONF_ENTRY_SCAN, DOMAIN
-from bluetooth_speaker_bulb import BleakError, discover_mylight_lamps, model_from_name
+from bluetooth_speaker_bulb import BleakError, discover_bluetooth_speaker_bulb_lamps, model_from_name
 
 _LOGGER = logging.getLogger(__name__)
 

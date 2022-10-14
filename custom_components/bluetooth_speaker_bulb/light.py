@@ -43,7 +43,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SUPPORT_MYLIGHT = SUPPORT_BRIGHTNESS | SUPPORT_EFFECT | SUPPORT_COLOR
+SUPPORT_BLUETOOTH_SPEAKER_BULB = SUPPORT_BRIGHTNESS | SUPPORT_EFFECT | SUPPORT_COLOR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -183,7 +183,7 @@ class BulbBT(LightEntity):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_MYLIGHT
+        return SUPPORT_BLUETOOTH_SPEAKER_BULB
 
     def _status_cb(self) -> None:
         _LOGGER.debug("Got state notification from the Bulb")
