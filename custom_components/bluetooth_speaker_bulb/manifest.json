@@ -13,7 +13,7 @@
   "requirements": [
     "bleak>=0.16.0",
     "bleak-retry-connector>=1.5.0",
-    "git+https://github.com/orrpan/bluetooth_speaker_bulb.git@master#bluetooth_speaker_bulb==0.0.9"
+    "git+https://github.com/orrpan/bluetooth_speaker_bulb.git@master#bluetooth_speaker_bulb==0.0.10"
   ],
   "version": "0.0.1",
   "iot_class": "local_polling",
