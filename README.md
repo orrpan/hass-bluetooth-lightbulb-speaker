@@ -1,3 +1,6 @@
+See pythonpackage https://github.com/orrpan/bluetooth_speaker_bulb
+
+//Original repo
 > **Warning**
 > The bluetooth landscape in HA is currently evolving and at the moment there still seem to be some issues with Candela.
 > Current status:
