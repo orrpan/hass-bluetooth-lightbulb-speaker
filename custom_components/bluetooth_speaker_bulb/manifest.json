@@ -22,13 +22,10 @@
   ],
   "bluetooth": [
     {
-      "local_name": "Badrum app"
+      "local_name": "Mylight app"
     },
     {
       "local_name": "Alloyseed app"
-    },
-    {
-      "local_name": "Mylight app"
     }
   ]
 }
